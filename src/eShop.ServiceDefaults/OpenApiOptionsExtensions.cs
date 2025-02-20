@@ -2,7 +2,6 @@
 using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -158,23 +157,18 @@ internal static class OpenApiOptionsExtensions
             if (apiVersionParameter is not null)
             {
                 apiVersionParameter.Description = "The API version, in the format 'major.minor'.";
-                apiVersionParameter.Schema.Example = new OpenApiString("1.0");
+                switch (context.DocumentName) {
+                    case "v1":
+                        apiVersionParameter.Schema.Example = new OpenApiString("1.0");
+                        break;
+                    case "v2":
+                        apiVersionParameter.Schema.Example = new OpenApiString("2.0");
+                        break;
+                }
             }
             return Task.CompletedTask;
         });
         return options;
-    }
-
-    private static IOpenApiAny? CreateOpenApiAnyFromObject(object value)
-    {
-        return value switch
-        {
-            bool b => new OpenApiBoolean(b),
-            int i => new OpenApiInteger(i),
-            double d => new OpenApiDouble(d),
-            string s => new OpenApiString(s),
-            _ => null
-        };
     }
 
     // This extension method adds a schema transformer that sets "nullable" to false for all optional properties.

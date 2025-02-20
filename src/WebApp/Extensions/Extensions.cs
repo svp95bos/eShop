@@ -37,7 +37,7 @@ public static class Extensions
             .AddAuthToken();
 
         builder.Services.AddHttpClient<CatalogService>(o => o.BaseAddress = new("http://catalog-api"))
-            .AddApiVersion(1.0)
+            .AddApiVersion(2.0)
             .AddAuthToken();
 
         builder.Services.AddHttpClient<OrderingService>(o => o.BaseAddress = new("http://ordering-api"))
@@ -98,14 +98,13 @@ public static class Extensions
 
     private static void AddAIServices(this IHostApplicationBuilder builder)
     {
-        string? ollamaEndpoint = builder.Configuration["AI:Ollama:Endpoint"];
-        if (!string.IsNullOrWhiteSpace(ollamaEndpoint))
+        if (builder.Configuration["OllamaEnabled"] is string ollamaEnabled && bool.Parse(ollamaEnabled))
         {
-            builder.Services.AddChatClient(new OllamaChatClient(ollamaEndpoint, builder.Configuration["AI:Ollama:ChatModel"] ?? "llama3.1"))
+            builder.AddOllamaSharpChatClient("chat");
+            builder.Services.AddChatClient(b => b.GetRequiredService<IChatClient>())
                 .UseFunctionInvocation()
                 .UseOpenTelemetry(configure: t => t.EnableSensitiveData = true)
-                .UseLogging()
-                .Build();
+                .UseLogging();
         }
         else
         {
